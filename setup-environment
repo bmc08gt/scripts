@@ -37,6 +37,9 @@ sudo apt-get install git gnupg ccache lzop flex bison \
 
 sudo ln -s /usr/lib/i386-linux-gnu/mesa/libGL.so.1 /usr/lib/i386-linux-gnu/libGL.so
 
+# Install htop
+sudo apt-get install htop
+
 # Install Spotify
 sudo apt-get install spotify-client
 
