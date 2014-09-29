@@ -1,0 +1,14 @@
+#!/bin/bash
+#set -x
+
+PREV_TAG=$1
+NEW_TAG=$2
+
+repo forall -cp "
+if git rev-parse android-${PREV_TAG} >/dev/null 2>&1
+then
+git log --oneline --no-merges android-${PREV_TAG}..android-${NEW_TAG}
+else
+git log --oneline --no-merges android-${NEW_TAG}
+fi
+"

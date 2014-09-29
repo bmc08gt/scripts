@@ -1,0 +1,26 @@
+#!/bin/bash
+here=`pwd`
+our_repos=${here}/our_repos.txt
+
+tag=$1
+
+# Create our_repos
+list=$(cat platform_manifest/default.xml | grep 'remote="matricom"' | awk '{print $2}' | cut -d '=' -f2 | awk -F\" '{print $2}')
+echo $list > $our_repos
+
+function create_manifest() {
+	git checkout -b tmp
+	repo manifest -r > default.xml
+	git add -A
+	git commit -m "Manifest for ${tag}"	
+}
+
+for repo in `cat $our_repos`; do
+    cd $repo
+    if [ "$repo" == "platform_manifest" ]; then
+        create_manifest
+    fi
+    git tag $tag
+    git push matricom $tag
+    cd -
+done

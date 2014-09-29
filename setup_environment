@@ -1,0 +1,47 @@
+#!/bin/bash
+
+kernel_version=$(uname -v)
+if [[ $kernel_version != *Ubuntu* ]]; then
+    echo "Your distro is not supported"
+    exit
+fi
+
+# Add spotify
+sudo apt-add-repository -y "deb http://repository.spotify.com stable non-free" &&
+    sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 94558F59
+
+# Add chrome
+wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+sudo sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+
+# Add sublime
+sudo add-apt-repository ppa:webupd8team/sublime-text-3
+
+# Update PPAs
+sudo apt-get update -qq
+
+# Install openjdk
+sudo apt-get install openjdk-7-jdk
+
+# Install packages
+sudo apt-get install git gnupg ccache lzop flex bison \
+               gperf build-essential zip curl zlib1g-dev \
+               zlib1g-dev:i386 libc6-dev lib32bz2-1.0 \
+               lib32ncurses5-dev x11proto-core-dev libx11-dev:i386 \
+               libreadline6-dev:i386 lib32z1-dev libgl1-mesa-glx:i386 \
+               libgl1-mesa-dev g++-multilib mingw32 tofrodos \
+               python-markdown libxml2-utils xsltproc libreadline6-dev \
+               lib32readline-gplv2-dev libncurses5-dev bzip2 libbz2-dev \
+               libbz2-1.0 libghc-bzlib-dev lib32bz2-dev squashfs-tools \
+               pngcrush schedtool dpkg-dev autoconf unzip zip gawk cmake
+
+sudo ln -s /usr/lib/i386-linux-gnu/mesa/libGL.so.1 /usr/lib/i386-linux-gnu/libGL.so
+
+# Install Spotify
+sudo apt-get install spotify-client
+
+# Install Chrome
+sudo apt-get install google-chrome-stable
+
+# Install sublime
+sudo apt-get install sublime-text-installer

@@ -1,0 +1,101 @@
+#!/bin/bash
+# Script to make pulling down upstream kernel revisions
+#set -x
+here=`pwd`
+
+upstream=/elmo/source/3.10.y
+
+#debugging flag
+debug=false
+
+# accept input as desired upstream kernel revision
+revision=$1
+
+print=$2 # y or n
+
+# variables used in script
+revision_file=
+version=
+patchlevel=
+sublevel=
+
+# print out of supported releases and patchlevels
+supported_releases="3.x"
+supported_3_patchlevels="3.0, 3.4, 3.10"
+
+#####
+
+if [ -z $revision ]; then
+	echo "Desired revision not provided..."
+	exit 0
+fi
+
+function get_kernel_specs() {
+    version=$(echo $revision | cut -d '.' -f1)
+    patchlevel=$(echo $revision | cut -d '.' -f2)
+    sublevel=$(echo $revision | cut -d '.' -f3)
+
+    if [ "$version" != "3" ]; then
+        echo "Supported linux kernel releases are ${supported_releases}"
+        exit 0
+    fi
+
+    if [ "$patchlevel" != "0" ] && [ "$patchlevel" != "4" ] && [ "$patchlevel" != "10" ]; then
+        echo "Supported patchlevels of linux release $version.x are ${supported_3_patchlevels}"
+        exit 0
+    fi
+}
+
+function fetch_upstream() {
+
+    branch=linux-$version.$patchlevel.y
+    if git ls-remote linux > /dev/null; then
+        git fetch linux $branch
+    else
+        git remote add linux https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
+        git fetch linux $branch
+    fi
+}
+
+function create_array() {
+    # Create array of commit SHA1's for cherry-picking
+    cd $upstream
+    git fetch linux
+    presublevel=$(($sublevel-1))
+    prerevision=${version}.${patchlevel}.${presublevel}
+    list=`git rev-list HEAD --reverse --no-merges v${prerevision}..v${revision}`
+    if [ "$print" == "y" ]; then
+        print_array
+        cd -
+        exit 0
+    fi
+    cd -
+}
+
+function print_array() {
+    for commit in ${list[@]}; do
+        echo $commit
+    done
+}
+
+function pick() {
+    for commit in ${list[@]}; do
+        git cherry-pick $commit
+    done
+}
+
+function checkout_staging_branch() {
+    git checkout -b $revision
+}
+
+
+
+function run() {
+    get_kernel_specs
+    fetch_upstream
+    create_array
+    checkout_staging_branch
+    pick
+}
+
+run
