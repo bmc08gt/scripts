@@ -37,6 +37,9 @@ sudo apt-get install git gnupg ccache lzop flex bison \
 
 sudo ln -s /usr/lib/i386-linux-gnu/mesa/libGL.so.1 /usr/lib/i386-linux-gnu/libGL.so
 
+# XBMC binaries needed in bin
+sudo ln -s /bin/mkdir /usr/bin/mkdir
+
 # Install htop
 sudo apt-get install htop
 
