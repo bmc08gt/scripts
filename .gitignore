@@ -2,3 +2,5 @@ python*
 repo
 *.txt
 bar
+arc-4.8.0/
+arm-none-eabi/
