@@ -51,3 +51,12 @@ sudo apt-get install google-chrome-stable
 
 # Install sublime
 sudo apt-get install sublime-text-installer
+
+# Create bin directory if it doesnt exist
+mkdir -p ~/bin
+
+# Add bin directory to the PATH (local to this term session - permanent addition will need to be done in ~/.bashrc)
+
+# curl down repo and set the permissions
+curl http://commondatastorage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+chmod a+x ~/bin/repo
