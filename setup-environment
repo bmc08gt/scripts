@@ -33,7 +33,7 @@ sudo apt-get install git gnupg ccache lzop flex bison \
                python-markdown libxml2-utils xsltproc libreadline6-dev \
                lib32readline-gplv2-dev libncurses5-dev bzip2 libbz2-dev \
                libbz2-1.0 libghc-bzlib-dev lib32bz2-dev squashfs-tools \
-               pngcrush schedtool dpkg-dev autoconf unzip zip gawk cmake
+               pngcrush schedtool dpkg-dev autoconf unzip zip gawk cmake curl
 
 sudo ln -s /usr/lib/i386-linux-gnu/mesa/libGL.so.1 /usr/lib/i386-linux-gnu/libGL.so
 
