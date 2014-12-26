@@ -56,6 +56,7 @@ sudo apt-get install sublime-text-installer
 mkdir -p ~/bin
 
 # Add bin directory to the PATH (local to this term session - permanent addition will need to be done in ~/.bashrc)
+export PATH=~/bin:$PATH
 
 # curl down repo and set the permissions
 curl http://commondatastorage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
