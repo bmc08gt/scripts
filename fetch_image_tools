@@ -1,0 +1,50 @@
+#!/bin/bash
+
+SIMG_PASS=0
+MAKE_EXT4_PASS=0
+
+# Ensure in user ~/android
+mkdir -p ~/android
+cd ~/android
+echo "Cloning AOSP system/extras"
+echo ""
+echo ""
+git clone https://android.googlesource.com/platform/system/extras >/dev/null 2>&1
+cd extras
+echo "Checking out to android-4.1.1_r1"
+echo ""
+git checkout android-4.1.1_r1
+cd ext4_utils
+echo ""
+echo ""
+echo "Compiling simg2img"
+echo ""
+echo ""
+gcc -o simg2img -lz ./sparse_crc32.c ./simg2img.c >/dev/null 2>&1
+if [ ! -f ~/android/extras/ext4_utils/simg2img ]; then
+	echo "simg2img compilation failed"
+else
+	echo "simg2img compiled successfully"
+	SIMG_PASS=1
+fi
+echo ""
+echo ""
+echo "Compiling make_ext4fs"
+gcc -o make_ext4fs -lz ./make_ext4fs_main.c ./make_ext4fs.c ./ext4fixup.c ./ext4_utils.c \
+        ./allocate.c ./backed_block.c ./output_file.c ./contents.c ./extent.c ./indirect.c \
+        ./uuid.c ./sha1.c ./sparse_crc32.c ./wipe.c >/dev/null 2>&1
+
+if [ ! -f ~/android/extras/ext4_utils/make_ext4fs ]; then
+	echo "make_ext4fs compilation failed"
+else
+	echo "make_ext4fs compiled successfully"
+	MAKE_EXT4_PASS=1
+fi
+
+if [ "$SIMG_PASS" == "1" ] && [ "$MAKE_EXT4_PASS" -eq  1 ]; then
+	echo "Complete."
+	echo "   Files are located in ~/android/extras/ext4_utils"
+	echo "           (simg2img and make_ext4fs)"
+else
+	"Compilation failed for one of the binaries"
+fi
