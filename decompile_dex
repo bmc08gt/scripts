@@ -1,0 +1,8 @@
+#!/bin/bash
+
+
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+    echo "`basename $0`: Must provide api level, dex and classout directory"
+    exit -1;
+fi
+java -jar ~/bin/baksmali.jar -a $1 -x $2 -o $3
