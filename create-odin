@@ -1,0 +1,118 @@
+#!/bin/bash
+#set -x
+
+show_help()
+{
+    echo "$0 [options] images"
+    echo "       options:"
+    echo "              -m : if the outputted tar should be md5sum'ed"
+    echo "              -n : Name of the created tar (required)"
+    echo "              -v : If output should be verbose"
+    echo ""
+}
+
+copy_images()
+{
+    echo "Setting up working directory..."
+    echo ""
+
+    # Remove tmp directory
+    rm -rf $WORKING_DIR
+
+    # Create tmp directory to store the images
+    # Allows passing any image from anywhere
+    mkdir -p $WORKING_DIR
+
+    echo "Copying images to working directory..."
+    echo ""
+    # pass images to tmp-odin
+    images=($IMAGES)
+    for image in "${images[@]}"; do
+        if [ $VERBOSE == true ]; then
+            echo "Copying $( basename $image)"
+            bar -n -o $WORKING_DIR/$(basename $image) $image
+        else
+            cp $image $WORKING_DIR/$(basename $image)
+        fi
+    done
+
+    # Change to tmp-odin directory
+    cd $WORKING_DIR
+}
+
+create_tar()
+{
+    echo "Creating tar...."
+    TAR_OUTPUT=${TAR_OUTPUT}.tar
+    tar -H ustar -c `ls ~/tmp-odin/` > ${TAR_NAME}.tar
+    echo ""
+}
+
+md5_tar()
+{
+    echo "Hashing the created tar...."
+    echo ""
+    TAR_OUTPUT=${TAR_NAME}.tar.md5
+    md5sum -t ${TAR_NAME}.tar >> ${TAR_NAME}.tar
+    mv ${TAR_NAME}.tar ${TAR_OUTPUT}
+}
+
+if [ $# -eq 0 ]; then
+   show_help
+   exit 1
+fi
+
+ORIGINAL_DIR=$(pwd)
+WORKING_DIR=$HOME/tmp-odin
+MD5_TAR=false
+VERBOSE=false
+
+OPTIND=1
+while getopts ":mn:v" opt; do
+    case $opt in
+        m) MD5_TAR=true ;;
+        n) TAR_NAME=$OPTARG ;;
+        v) VERBOSE=true ;;
+        :)
+            echo "Option -$OPTARG requires an argument."
+            exit 1
+        ;;
+    esac
+done
+
+shift $((OPTIND-1))
+IMAGES=$@
+
+if [ -z "$TAR_NAME" ]; then
+    echo "Name of the tar is required"
+    show_help
+    exit 1
+fi
+
+if [ ${#IMAGES} -lt 1 ]; then
+    echo "At least one image is required to create an odin image"
+    show_help
+    exit 1
+fi
+
+TAR_OUTPUT=$(basename ${TAR_NAME} .tar)
+
+copy_images
+echo ""
+create_tar $TAR_NAME
+
+if [ $MD5_TAR == true ]; then
+    md5_tar $TAR_NAME
+fi
+
+# Return back to calling directory
+cd $ORIGINAL_DIR
+
+# Move the odin image here
+mv $WORKING_DIR/${TAR_OUTPUT} $ORIGINAL_DIR/
+
+# Remove tmp-odin directory
+rm -rf $WORKING_DIR
+
+echo "tar creation complete."
+echo "tar is named: ${TAR_OUTPUT}"
