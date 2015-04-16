@@ -1,0 +1,42 @@
+#!/bin/bash
+#set -x
+APK=$1
+FACTORY_RESET_REQUESTED=$2
+FACTORY_RESET=false
+REBOOT="reboot"
+
+DEVICE=$(pwd)
+FULL_PATH=$(find system -name $APK)
+
+if [ "$FACTORY_RESET_REQUESTED" == "wipe" ]; then
+    FACTORY_RESET=true
+fi
+
+if [ -z $FULL_PATH ]; then
+    echo "Unable to locate full path to $APK."
+    echo "Would you like to provide its location for installation on the
+device?"
+    echo "ex. system/app/myApp.apk"
+    read path
+    FULL_PATH=$path
+else
+    echo "Found full path at $FULL_PATH"
+fi
+
+echo ""
+echo "---- Pushing apk to device ----"
+adb push $APK /data/local/tmp
+echo "---- Mounting system r/w ----"
+adb shell su -c "mount -o remount,rw /system"
+echo "---- Moving app to $FULL_PATH ----"
+adb shell su -c "dd if=/data/local/tmp/$APK of=$FULL_PATH"
+echo "---- Setting permissions ----"
+adb shell su -c "chmod 644 $FULL_PATH"
+
+if [ $FACTORY_RESET == true ]; then
+    adb shell su -c "echo '--wipe_data' > /cache/recovery/command"
+    REBOOT="reboot recovery"
+fi
+
+echo "---- Rebooting - ($REBOOT) ----"
+adb $REBOOT
