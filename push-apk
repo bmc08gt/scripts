@@ -1,21 +1,40 @@
 #!/bin/bash
 #set -x
-APK=$1
-FACTORY_RESET_REQUESTED=$2
+
+REMOVE_ODEX_IF_EXISTS=false
 FACTORY_RESET=false
 REBOOT="reboot"
 
-DEVICE=$(pwd)
-FULL_PATH=$(find system -name $APK)
+show_help()
+{
+    echo "$0 [options] apk"
+    echo "       options:"
+    echo "              -d : if the odex should be removed from the system for the application (if exists)"
+    echo "              -w : if data should be wiped in recovery when rebooting"
+    echo ""
+}
 
-if [ "$FACTORY_RESET_REQUESTED" == "wipe" ]; then
-    FACTORY_RESET=true
+if [ $# -eq 0 ]; then
+   show_help
+   exit 1
 fi
+
+OPTIND=1
+while getopts ":dw" opt; do
+    case $opt in
+        d) REMOVE_ODEX_IF_EXISTS=true ;;
+        w) FACTORY_RESET=true ;;
+    esac
+done
+
+shift $((OPTIND-1))
+APK=$1
+
+FULL_PATH=$(find system -name $APK)
 
 if [ -z $FULL_PATH ]; then
     echo "Unable to locate full path to $APK."
-    echo "Would you like to provide its location for installation on the
-device?"
+    echo "Would you like to provide its location for installation on the device?"
     echo "ex. system/app/myApp.apk"
     read path
     FULL_PATH=$path
@@ -23,15 +42,26 @@ else
     echo "Found full path at $FULL_PATH"
 fi
 
+# Path without APK name
+FULL_PATH=${FULL_PATH%/*}
+
 echo ""
 echo "---- Pushing apk to device ----"
 adb push $APK /data/local/tmp
 echo "---- Mounting system r/w ----"
 adb shell su -c "mount -o remount,rw /system"
-echo "---- Moving app to $FULL_PATH ----"
-adb shell su -c "dd if=/data/local/tmp/$APK of=$FULL_PATH"
+echo "---- Moving app to $FULL_PATH/$APK ----"
+adb shell su -c "dd if=/data/local/tmp/$APK of=$FULL_PATH/$APK"
+if [ $REMOVE_ODEX_IF_EXISTS == true ]; then
+    NAME=${APK%%.*}
+    ODEX_EXISTS=$(adb shell ls $FULL_PATH | tr -d '\015'|grep "^$NAME.odex")
+    if [ ! -z $ODEX_EXISTS ]; then
+        echo "Removing odex"
+        adb shell su -c 'rm -rf $FULL_PATH/$NAME.odex'
+    fi
+fi
 echo "---- Setting permissions ----"
-adb shell su -c "chmod 644 $FULL_PATH"
+adb shell su -c "chmod 644 $FULL_PATH/$APK"
 
 if [ $FACTORY_RESET == true ]; then
     adb shell su -c "echo '--wipe_data' > /cache/recovery/command"
