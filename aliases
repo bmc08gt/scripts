@@ -8,6 +8,118 @@ alias aptget='sudo apt-get'
 alias minicom='sudo minicom'
 alias connectwear='adb forward tcp:4444 localabstract:/adb-hub; adb connect localhost:4444'
 
+# Uncompressed zip
+function bloatzip()
+{
+   if [ -z $1 -o $2 ]; then
+       echo "Please provide the zip name and directory to be zipped"
+       exit 1
+   fi
+   zip -rn *:: $1 $2
+
+}
+
+# copy file to clipboard
+alias clipboard='xclip -sel clip'
+
+# Add/update an APK's classes.dex
+function add-dex()
+{
+    local APK=$1
+    local DEX=$2
+    if [ -z $APK -o -z $DEX ]; then
+        echo "Must provide an apk and classes.dex"
+        echo "add-dex <apk> <dex to add/update>"
+        return 1
+    fi
+    zip -gjq $APK $DEX
+}
+
+# Add/update an APK's resource file in res/
+function add-resource()
+{
+    local APK=$1
+    APK_NAME=${APK%%.*}
+    RESOURCE_PATH=$2
+    DIR=$(pwd)
+
+    echo "Adding $RESOURCE_PATH to $APK"
+    (cd apk/$APK_NAME/build/apk; zip -g $DIR/$APK $RESOURCE_PATH)
+}
+
+# Add/update an APK's resources.arsc
+function add-arsc()
+{
+    local APK=$1
+    local ARSC=$2
+    if [ -z $APK -o -z $ARSC ]; then
+        echo "Must provide an apk and resources.arsc"
+        echo "add-arsc <apk> <arsc to add/update>"
+        return 1
+    fi
+    zip -gjq $APK $ARSC
+}
+
+# grep the current project tree
+function treegrep()
+{
+    find . -name .repo -prune -o -name .git -prune -o -regextype posix-egrep -iregex '.*\.(c|h|cpp|S|java|xml|smali)' -type f -print0 | xargs -0 grep --color -n -i "$@"
+}
+
+# pydroid aliases
+alias repacksystem='sudo pydroid system pack . system.img'
+alias unpacksystem='sudo pydroid system unpack system.img .'
+alias repackboot='sudo pydroid boot pack boot boot.img'
+alias unpackboot='sudo pydroid boot unpack boot.img boot'
+alias repackrecovery='sudo pydroid recovery pack recovery recovery.img'
+alias unpackrecovery='sudo pydroid recovery unpack recovery.img recovery'
+
+# LZ4 compressed extraction
+function lz4unpack()
+{
+    INPUT_LZ4=$1
+    OUTPUT_LZ4=${INPUT_LZ4%%.*}
+    if [ -z $INPUT_LZ4 ]; then
+        echo "Please provide the lz4 compressed ramdisk"
+        exit 1
+    fi
+    lz4 -d $INPUT_LZ4 $OUTPUT_LZ4
+}
+
+# LZ4 compression
+function lz4repack()
+{
+    INPUT_LZ4=$1
+    OUTPUT_LZ4=${INPUT_LZ4}.gz
+
+    if [ -z $INPUT_LZ4 ]; then
+        echo "Please provide the ramdisk to be lz4 compressed"
+        exit 1
+    fi
+    lz4 -l -9 $INPUT_LZ4 $OUTPUT_LZ4
+}
+
+# Create ramdisk
+function create-ramdisk()
+{
+    if [ ! -f init ]; then
+        echo "No ramdisk directory found."
+        exit 1
+    fi
+    find . | cpio -o -H newc | gzip > ../ramdisk.gz
+}
+
+# Extract ramdisk
+function extract-ramdisk()
+{
+    RAMDISK=$(find ../ -name ramdisk*)
+    if [ -z "$RAMDISK" ]; then
+        echo "No ramdisk found in parent directory"
+        exit 1
+    fi
+    gunzip -c $RAMDISK | cpio -i
+}
+
 # git aliases
 alias ga='git add'
 alias gb='git branch'
