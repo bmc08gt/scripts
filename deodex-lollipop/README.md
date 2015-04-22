@@ -60,7 +60,7 @@ To deodex the smali into a dex:
     
 The last command outputs a classes.dex that is going to go into the apk.
 
-    zip -gjq SecSettings2 classes.dex
+    zip -gjq SecSettings2.apk classes.dex
 
 Now we need to remove the arm or arm64 folder from the apk's location on the device.
 
