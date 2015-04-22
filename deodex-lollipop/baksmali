@@ -1,0 +1,4 @@
+#!/bin/bash
+# Wrapper for using baksmali
+#
+java -jar baksmali.jar $*

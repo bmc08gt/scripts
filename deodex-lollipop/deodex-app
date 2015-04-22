@@ -1,0 +1,115 @@
+#!/bin/bash
+#
+# Script to deodex an app on the device in-place
+#
+# Brandon McAnsh a.k.a bmc08gt (C) 2015
+#
+#set -x
+
+APK=$1
+NAME=${APK%%.*}
+
+HOME=$(pwd)
+
+FIND_EXISTS=false
+
+FIND=$(adb shell ls /system/ | tr -d '\015'|grep '^find$')
+
+if [ ! -z $FIND ]; then
+    FIND_EXISTS=true
+fi
+
+if [ $FIND_EXISTS == true ]; then
+    FULL_PATH=$(find system -name $APK)
+else
+	FULL_PATH=$(adb shell ls /system/app | grep -w $NAME | tr -d '\r')
+	if [ -z $FULL_PATH ]; then
+	    FULL_PATH=$(adb shell ls /system/priv-app | grep -w $NAME | tr -d '\r')
+	    if [ -z $FULL_PATH ]; then
+	        echo "Unable to determine app's location"
+	        echo "Exiting...."
+	        exit 1
+	    else
+	        FULL_PATH=/system/priv-app/$NAME
+	    fi
+	else
+	    FULL_PATH=/system/app/$NAME
+	fi
+fi
+echo "Checking app's architecture..."
+echo ""
+if [ $FIND_EXISTS == true ]; then    
+	ARCH=$(find $FULL_PATH -name arm)
+else
+	ARCH=$(adb shell ls $FULL_PATH | grep -w arm | tr -d '\r')
+	if [ -z $ARCH ]; then
+	    ARCH=$(adb shell ls $FULL_PATH | grep -w arm64 | tr -d '\r')
+	    if [ -z $ARCH ]; then
+	    	echo "This app is already deodexed."
+	    	echo "Exiting...."
+	    	exit 1
+	    fi
+    fi
+fi
+
+rm *.apk
+rm classes.dex
+
+echo "Creating workspace"
+echo ""
+
+if [ -d tmp ]; then
+    (cd tmp; find * -maxdepth 0 -name 'framework' -prune -o -exec rm -rf '{}' ';')
+else
+    mkdir tmp
+    echo "Pulling the framework"
+    echo ""
+    (mkdir tmp/framework; cd tmp/framework; adb pull system/framework)
+fi
+
+echo "Pulling $NAME files"
+echo ""
+(mkdir tmp/$NAME; cd tmp/$NAME; adb pull $FULL_PATH)
+
+cp tmp/$NAME/$APK ${HOME}/
+
+
+if [ ! -d tmp/framework/$ARCH/odex ]; then
+	echo "Extracting class-path from boot.oat"
+	echo ""
+	${HOME}/oat2dex boot tmp/framework/$ARCH/boot.oat
+fi
+
+echo "Creating compatible dex for $APK"
+echo ""
+${HOME}/oat2dex tmp/$NAME/$ARCH/$NAME.odex tmp/framework/$ARCH/odex
+
+echo "Performing baksmali/smali operations"
+echo ""
+${HOME}/baksmali -a 21 -x tmp/$NAME/$ARCH/$NAME.dex -d system/framework -o tmp/smali
+${HOME}/smali tmp/smali 
+
+echo "Pushing dex into apk"
+echo ""
+zip -gjq $APK classes.dex
+rm classes.dex
+
+echo "Cleaning $FULL_PATH for deodex"
+echo ""
+adb shell su -c 'mount -o remount,rw /system'
+adb shell su -c "rm -rf $FULL_PATH/$ARCH"
+
+echo "Pushing $APK to /data/local/tmp"
+echo ""
+adb push $APK /data/local/tmp/
+
+echo "Moving $APK to $FULL_PATH"
+echo ""
+adb shell su -c "dd if=/data/local/tmp/$APK of=$FULL_PATH/$APK"
+
+echo "Fixing permissions"
+echo ""adb shell su -c "chmod 644 $FULL_PATH/$APK"
+
+echo "Rebooting device"
+echo ""
+adb reboot
