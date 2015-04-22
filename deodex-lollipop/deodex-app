@@ -7,6 +7,9 @@
 #set -x
 
 APK=$1
+if [ $APK != "*.apk" ]; then
+	APK=$APK.apk
+fi
 NAME=${APK%%.*}
 
 HOME=$(pwd)
