@@ -3,8 +3,8 @@
 ######Deodexing apk's on lollipop is almost as simple as API < 21 and only invoves two extra steps.
 
 The workflow for the new deodex process is as follows below. The <arch> is the architecture for the apk being deodexed.
-  1. oat2dex boot system/framework/<arch>/boot.oat
-  2. oat2dex <path/to/app/<arch>/app.odex> system/framework/<arch>/odex
+  1. `oat2dex boot system/framework/<arch>/boot.oat`
+  2. `oat2dex <path/to/app/<arch>/app.odex>` `system/framework/<arch>/odex`
   3. baksmali as normal
   4. smali as normal
   
