@@ -86,3 +86,5 @@ That's it. The script will determine the apk's location in system, check if it's
 files to perform the deodexing, and will push the apk back to the device and reboot.
 
 /lazydev
+
+Huge credits to @JesusFreke for baksmali and smali, and credit to @svadev for the updated oat2dex
