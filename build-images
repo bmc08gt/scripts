@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Script to build a 'ROM' with pydroid
+# opts for system,cache,recovery, and boot (all optional)
+
+show_help()
+{
+	echo "$0 [options]"
+	echo "        options:"
+	echo "               -s: Build system image"
+	echo "               -c: Build cache image"
+	echo "               -b: Build boot image"
+	echo "               -r: Build recovery image"
+	echo ""
+}
+
+build-image()
+{
+	sudo pydroid $1 pack . $1.img
+}
+
+BUILD_BOOT=false
+BUILD_CACHE=false
+BUILD_RECOVERY=false
+BUILD_SYSTEM=false
+
+if [[ $# < 1 ]]; then
+    show_help
+fi
+
+OPTIND=1
+while getopts ":bcrs" opt; do
+    case $opt in
+        b) BUILD_BOOT=true ;;
+        c) BUILD_CACHE=true ;;
+        r) BUILD_RECOVERY=true ;;
+        s) BUILD_SYSTEM=true ;;
+    esac
+done
+
+shift $((OPTIND-1))
+
+if [ $BUILD_BOOT == true ]; then
+    echo "Building boot.img...."    
+    build-image boot
+    echo ""
+fi
+
+if [ $BUILD_CACHE == true ]; then
+    echo "Building cache.img...."
+    build-image cache
+    echo ""
+fi
+
+if [ $BUILD_RECOVERY == true ]; then
+    echo "Building recovery.img...."
+    build-image recovery
+    echo ""
+fi
+
+if [ $BUILD_SYSTEM == true ]; then
+    echo "Building system.img...."
+    build-image system
+    echo ""
+fi
+
