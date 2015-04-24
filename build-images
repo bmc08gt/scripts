@@ -2,7 +2,7 @@
 
 # Script to build a 'ROM' with pydroid
 # opts for system,cache,recovery, and boot (all optional)
-
+set -x
 show_help()
 {
 	echo "$0 [options]"
@@ -11,6 +11,7 @@ show_help()
 	echo "               -c: Build cache image"
 	echo "               -b: Build boot image"
 	echo "               -r: Build recovery image"
+    echo "               -t: If an odin image should be created from the images. Requires <name>"
 	echo ""
 }
 
@@ -29,38 +30,46 @@ if [[ $# < 1 ]]; then
 fi
 
 OPTIND=1
-while getopts ":bcrs" opt; do
+while getopts ":bcrst:" opt; do
     case $opt in
         b) BUILD_BOOT=true ;;
         c) BUILD_CACHE=true ;;
         r) BUILD_RECOVERY=true ;;
         s) BUILD_SYSTEM=true ;;
+        t) ODIN_TAR_NAME=$OPTARG ;;
     esac
 done
 
 shift $((OPTIND-1))
-
+IMAGES=()
 if [ $BUILD_BOOT == true ]; then
     echo "Building boot.img...."    
     build-image boot
+    IMAGES+=('boot.img')
     echo ""
 fi
 
 if [ $BUILD_CACHE == true ]; then
     echo "Building cache.img...."
     build-image cache
+    IMAGES+=('cache.img')
     echo ""
 fi
 
 if [ $BUILD_RECOVERY == true ]; then
     echo "Building recovery.img...."
     build-image recovery
+    IMAGES+=('recovery.img')
     echo ""
 fi
 
 if [ $BUILD_SYSTEM == true ]; then
     echo "Building system.img...."
     build-image system
+    IMAGES+=('system.img')
     echo ""
 fi
 
+if [ ${#IMAGES[@]} > 0 ]; then
+    create-odin -mv -n $ODIN_TAR_NAME $(echo ${IMAGES[@]})
+fi
