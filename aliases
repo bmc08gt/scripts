@@ -120,6 +120,20 @@ function extract-ramdisk()
     gunzip -c $RAMDISK | cpio -i
 }
 
+#github utils
+# Relace user and password locally
+function create-org-repo()
+{
+    local org=$1
+    local repo=$2
+    'curl -u 'user:password' https://api.github.com/orgs/$org/repos -d '{"name":"'$repo'"}
+}
+function create-repo()
+{
+    repo=$1
+    curl -u 'user:password' https://api.github.com/user/repos -d '{"name":"$repo"}'
+}
+
 # git aliases
 alias ga='git add'
 alias gb='git branch'
