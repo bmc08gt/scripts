@@ -131,7 +131,7 @@ function create-org-repo()
 function create-repo()
 {
     repo=$1
-    curl -u 'user:password' https://api.github.com/user/repos -d '{"name":"$repo"}'
+    curl -u 'user:password' https://api.github.com/user/repos -d '{"name":"'$repo'"}'
 }
 
 # git aliases
