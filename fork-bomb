@@ -1,0 +1,12 @@
+#!/bin/bash
+# Script to drop a fork on github using github API v3
+#
+repo=$1
+location=$2
+
+rm -rf $location
+git clone --mirror https://github.com/:owner/"$repo" $location
+cd $location
+curl -u 'user:password' -X DELETE https://api.github.com/repos/:owner/"$repo"
+curl -u 'user:password' https://api.github.com/orgs/:org/repos -d '{"name":"'$repo'"}'
+git push --mirror https://github.com/:owner/$repo
