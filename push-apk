@@ -4,6 +4,7 @@
 REMOVE_ODEX_IF_EXISTS=false
 FACTORY_RESET=false
 FIND_EXISTS=false
+API=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
 FIND=$(adb shell ls /system/ | tr -d '\015'|grep '^find$')
 REBOOT="reboot"
 
@@ -43,7 +44,6 @@ shift $((OPTIND-1))
 APK=$1
 NAME=${APK%%.*}
 
-
 if [ ! -z $FIND ]; then
     FIND_EXISTS=true
 fi
@@ -55,31 +55,45 @@ else
 	if [ -z $FULL_PATH ]; then
 	    FULL_PATH=$(adb shell ls /system/priv-app | grep -w $NAME | tr -d '\r')
 	    if [ -z $FULL_PATH ]; then
-	        echo "Unable to determine app's location"
-	        echo "Exiting...."
-	        exit 1
+	        FULL_PATH=$(adb shell ls /system/framework | grep -w $NAME | tr -d '\r')
+                if [ -z $FULL_PATH ]; then
+	            echo "Unable to determine app's location"
+	            echo "Exiting...."
+	            exit 1
+	        else
+	            FULL_PATH=/system/framework
+	        fi
 	    else
-	        FULL_PATH=/system/priv-app/$NAME
+	        if [ $API -ge  21 ]; then
+	            FULL_PATH=/system/priv-app/$NAME
+	        else
+	            FULL_PATH=/system/priv-app
+	        fi
 	    fi
 	else
-	    FULL_PATH=/system/app/$NAME
+	    if [ $API -ge 21 ]; then
+	        FULL_PATH=/system/app/$NAME
+	    else
+	        FULL_PATH=/system/app
+	    fi
 	fi
 fi
 
-echo "Found apk's location at $FULL_PATH"
-
-echo "Checking app's architecture..."
+echo "---- Found apk's location at $FULL_PATH ----"
 echo ""
-if [ $FIND_EXISTS == true ]; then    
-	ARCH=$(find $FULL_PATH -name arm)
-else
-	ARCH=$(adb shell ls $FULL_PATH | grep -w arm | tr -d '\r')
-	if [ -z $ARCH ]; then
-	    ARCH=$(adb shell ls $FULL_PATH | grep -w arm64 | tr -d '\r')
+
+echo "---- Checking app's architecture... ----"
+echo ""
+if [ $API -ge 21 ]; then
+    if [ $FIND_EXISTS == true ]; then    
+        ARCH=$(find $FULL_PATH -name arm)
+    else
+        ARCH=$(adb shell ls $FULL_PATH | grep -w arm | tr -d '\r')
+        if [ -z $ARCH ]; then
+            ARCH=$(adb shell ls $FULL_PATH | grep -w arm64 | tr -d '\r')
+        fi
     fi
 fi
-
-echo "App's architecture is $ARCH"
 
 echo ""
 echo "---- Pushing apk to device ----"
@@ -108,4 +122,4 @@ if [ $FACTORY_RESET == true ]; then
 fi
 
 echo "---- Rebooting - ($REBOOT) ----"
-#adb $REBOOT
+adb $REBOOT
