@@ -6,6 +6,8 @@ FACTORY_RESET=false
 FIND_EXISTS=false
 API=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
 FIND=$(adb shell ls /system/ | tr -d '\015'|grep '^find$')
+FULL_PATH=
+ARCH=
 REBOOT="reboot"
 
 show_help()
@@ -25,6 +27,55 @@ wipedata()
     adb shell su -c 'chmod 644 /cache/recovery/command'
     adb reboot recovery
     rm -rf command
+}
+
+get_apk_path()
+{
+    if [ $FIND_EXISTS == true ]; then
+        FULL_PATH=$(find system -name $APK)
+    else
+        FULL_PATH=$(adb shell ls /system/app | grep -w $NAME | tr -d '\r')
+        if [ -z $FULL_PATH ]; then
+            FULL_PATH=$(adb shell ls /system/priv-app | grep -w $NAME | tr -d '\r')
+            if [ -z $FULL_PATH ]; then
+                FULL_PATH=$(adb shell ls /system/framework | grep -w $NAME | tr -d '\r')
+                if [ -z $FULL_PATH ]; then
+                    echo "Unable to determine app's location"
+                    echo "Please enter the full path to the directory containing the apk"
+                    read path
+                    FULL_PATH=$path
+                else
+                    FULL_PATH=/system/framework
+                fi
+            else
+                if [ $API -ge  21 ]; then
+                    FULL_PATH=/system/priv-app/$NAME
+                else
+                    FULL_PATH=/system/priv-app
+                fi
+            fi
+        else
+            if [ $API -ge 21 ]; then
+                FULL_PATH=/system/app/$NAME
+            else
+                FULL_PATH=/system/app
+            fi
+        fi
+    fi
+}
+
+get_apk_arch()
+{
+    if [ $API -ge 21 ]; then
+        if [ $FIND_EXISTS == true ]; then
+            ARCH=$(find $FULL_PATH -name arm)
+        else
+            ARCH=$(adb shell ls $FULL_PATH | grep -w arm | tr -d '\r')
+            if [ -z $ARCH ]; then
+                ARCH=$(adb shell ls $FULL_PATH | grep -w arm64 | tr -d '\r')
+            fi
+        fi
+    fi
 }
 
 if [ $# -eq 0 ]; then
@@ -48,54 +99,11 @@ if [ ! -z $FIND ]; then
     FIND_EXISTS=true
 fi
 
-if [ $FIND_EXISTS == true ]; then
-    FULL_PATH=$(find system -name $APK)
-else
-	FULL_PATH=$(adb shell ls /system/app | grep -w $NAME | tr -d '\r')
-	if [ -z $FULL_PATH ]; then
-	    FULL_PATH=$(adb shell ls /system/priv-app | grep -w $NAME | tr -d '\r')
-	    if [ -z $FULL_PATH ]; then
-	        FULL_PATH=$(adb shell ls /system/framework | grep -w $NAME | tr -d '\r')
-                if [ -z $FULL_PATH ]; then
-	            echo "Unable to determine app's location"
-	            echo "Exiting...."
-	            exit 1
-	        else
-	            FULL_PATH=/system/framework
-	        fi
-	    else
-	        if [ $API -ge  21 ]; then
-	            FULL_PATH=/system/priv-app/$NAME
-	        else
-	            FULL_PATH=/system/priv-app
-	        fi
-	    fi
-	else
-	    if [ $API -ge 21 ]; then
-	        FULL_PATH=/system/app/$NAME
-	    else
-	        FULL_PATH=/system/app
-	    fi
-	fi
-fi
-
+get_apk_path
 echo "---- Found apk's location at $FULL_PATH ----"
-echo ""
 
-echo "---- Checking app's architecture... ----"
-echo ""
-if [ $API -ge 21 ]; then
-    if [ $FIND_EXISTS == true ]; then    
-        ARCH=$(find $FULL_PATH -name arm)
-    else
-        ARCH=$(adb shell ls $FULL_PATH | grep -w arm | tr -d '\r')
-        if [ -z $ARCH ]; then
-            ARCH=$(adb shell ls $FULL_PATH | grep -w arm64 | tr -d '\r')
-        fi
-    fi
-fi
+get_apk_arch
 
-echo ""
 echo "---- Pushing apk to device ----"
 adb push $APK /data/local/tmp
 
