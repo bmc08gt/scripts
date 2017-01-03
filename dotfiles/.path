@@ -1,0 +1,6 @@
+SDK_PLATFORM_TOOLS_PATH=~/Development/android-sdk-macosx/platform-tools
+SDK_TOOLS_PATH=~/Development/android-sdk-macosx/tools
+export PATH=$SDK_PLATFORM_TOOLS_PATH:$SDK_TOOLS_PATH:$PATH
+export PATH=~/bin:$PATH 
+export PATH=/usr/local/bin:$PATH 
+export PATH=$(brew --prefix curl)/bin:$PATH

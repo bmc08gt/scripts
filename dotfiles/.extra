@@ -1,0 +1,82 @@
+GIT_AUTHOR_NAME="Brandon McAnsh"
+GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+git config --global user.name "$GIT_AUTHOR_NAME" 
+GIT_AUTHOR_EMAIL="brandon.mcansh@gmail.com" 
+GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+git config --global user.email "$GIT_AUTHOR_EMAIL"
+
+source ~/.extras/.app-pkg-names
+
+eval "$(gerrit completion)"
+
+export BUILD_MAC_SDK_EXPERIMENTAL=1 
+export LC_CTYPE=C 
+export LANG=C 
+export EDITOR=nano 
+export USE_CCACHE=1 
+export CCACHE_DIR=/Volumes/Android/ccache 
+
+alias showFiles='defaults write com.apple.finder AppleShowAllFiles YES; killall Finder /System/Library/CoreServices/Finder.app'
+alias hideFiles='defaults write com.apple.finder AppleShowAllFiles NO; killall Finder /System/Library/CoreServices/Finder.app'
+
+function cli() {
+    local var=$1
+
+    if [ $var == '--version' ]; then
+         version=`pkgutil --pkg-info=com.apple.pkg.CLTools_Executables | grep -i version | cut -d ':' -f2 | xargs`
+         echo "XCode CLI Version is $version"
+    fi
+}
+
+alias rm=trash
+
+xcode7() {
+    sudo xcode-select -s /Applications/Xcode7_4.app
+}
+
+xcode() {
+    sudo xcode-select -s /Applications/Xcode.app
+}
+
+# wrapper around homebrew that will ensure you are switched to current xcode prior to brewing
+infuse() {
+    xcp=$(xcode-select -p)
+    echo $xcp
+    if [[ "$xcp" =~ .*7.* ]]; then
+        xcv=74
+        xcode
+    else
+        xcv=0
+    fi
+    brew $*
+    if [ xcv != 0 ]; then
+        xcode7
+    fi
+}
+
+laos-13() {
+    laos
+    cd 13.0
+}
+
+laos-14() {
+    laos
+    cd 14.1
+}
+
+laos() {
+   android
+   cd laos
+}
+
+android() {
+   diskutil mount /dev/disk2s2 > /dev/null
+   cd /Volumes/Android
+}
+
+function android-kill-proc() {
+    local pkgName=$(get-pkgname $1)
+    adb wait-for-device
+    echo "Killing: "$pkgName
+    adb shell am kill $pkgName
+}
