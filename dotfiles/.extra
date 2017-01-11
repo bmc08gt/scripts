@@ -5,7 +5,9 @@ GIT_AUTHOR_EMAIL="brandon.mcansh@gmail.com"
 GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
 git config --global user.email "$GIT_AUTHOR_EMAIL"
 
-source ~/.extras/.app-pkg-names
+
+for f in `ls -a ~/.extras/.hidden/.[a-zA-Z]*`; do source $f; done
+unset f
 
 eval "$(gerrit completion)"
 
