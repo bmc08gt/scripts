@@ -18,8 +18,14 @@ export EDITOR=nano
 export USE_CCACHE=1 
 export CCACHE_DIR=/Volumes/Android/ccache 
 
+alias slackmoji="sips -Z 128 $1"
+
 alias showFiles='defaults write com.apple.finder AppleShowAllFiles YES; killall Finder /System/Library/CoreServices/Finder.app'
 alias hideFiles='defaults write com.apple.finder AppleShowAllFiles NO; killall Finder /System/Library/CoreServices/Finder.app'
+
+
+alias kill-mdns='sudo launchctl unload -w /System/Library/LaunchDaemons/com.apple.mDNSResponder.plist'
+alias start-mdns='sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.mDNSResponder.plist'
 
 function cli() {
     local var=$1
@@ -69,10 +75,6 @@ laos() {
    cd laos
 }
 
-android() {
-   diskutil mount /dev/disk2s2 > /dev/null
-   cd /Volumes/Android
-}
 
 function android-kill-proc() {
     local pkgName=$(get-pkgname $1)
@@ -80,3 +82,13 @@ function android-kill-proc() {
     echo "Killing: "$pkgName
     adb shell am kill $pkgName
 }
+
+function wheres-my-notifications() {
+    echo "Launching notificationcenterui.plist...."
+    launchctl load -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist 2> /dev/null
+    echo "Launching notificationcenterui.agent...."
+    launchctl start com.apple.notificationcenterui.agent 2> /dev/null
+    echo "Restarting SystemUIServer"
+    killall SystemUIServer
+}
+

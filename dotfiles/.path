@@ -1,6 +1,11 @@
-SDK_PLATFORM_TOOLS_PATH=~/Development/android-sdk-macosx/platform-tools
-SDK_TOOLS_PATH=~/Development/android-sdk-macosx/tools
+export ANDROID_SDK_PATH=~/Development/android-sdk-macosx
+SDK_PLATFORM_TOOLS_PATH=$ANDROID_SDK_PATH/platform-tools
+SDK_TOOLS_PATH=$ANDROID_SDK_PATH/tools
 export PATH=$SDK_PLATFORM_TOOLS_PATH:$SDK_TOOLS_PATH:$PATH
 export PATH=~/bin:$PATH 
 export PATH=/usr/local/bin:$PATH 
 export PATH=$(brew --prefix curl)/bin:$PATH
+export PATH=$HOME/.fastlane/bin:$PATH
+
+export ANDROID_JDK8_PATH=/Library/Java/JavaVirtualMachines/jdk1.8.0_66.jdk/Contents/Home
+export ANDROID_JDK7_PATH=/Library/Java/JavaVirtualMachines/jdk1.7.0_79.jdk/Contents/Home
